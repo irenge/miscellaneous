@@ -147,11 +147,11 @@ return kill_exit(args, args->ret);
 }
 """
 
-if args.tpid:
-    bpf_text = bpf_text.replace('TPID_FILTER',
-    'if (tpid != %s) { return 0; }' % args.tpid)
-else:
-    bpf_text = bpf_text.replace('TPID_FILTER', '')
+#if args.tpid:
+   # bpf_text = bpf_text.replace('TPID_FILTER',
+  #  'if (tpid != %s) { return 0; }' % args.tpid)
+#else:
+ #   bpf_text = bpf_text.replace('TPID_FILTER', '')
 if args.pid:
     bpf_text = bpf_text.replace('PID_FILTER',
         'if (pid != %s) { return 0; }' % args.pid)

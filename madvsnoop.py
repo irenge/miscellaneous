@@ -19,8 +19,7 @@ from time import strftime
 #arguments
 examples = """examples:
     ./madvsnoop           # trace all madvise() signals
-    ./madvsnoop -p 181    # only trace PID 181
-    ./madvsnoop -s 9      # only trace signal 9
+    ./madvsnoop -p 4086    # only trace PID 4086
 """
 parser = argparse.ArgumentParser(
     description="Trace signals issued by the madvise() syscall",
@@ -30,13 +29,16 @@ parser.add_argument("-x", "--failed", action="store_true",
     help="only show failed madvise syscalls")
 parser.add_argument("-p", "--pid",
     help="trace this PID only")
+#parser.add_argument("-s", "--signal",
+ #   help="trace this signal only")
 parser.add_argument("--ebpf", action="store_true",
     help=argparse.SUPPRESS)
 args = parser.parse_args()
 debug = 0
 
-# load BPF program
-b = BPF(text="""
+
+# define BPF program
+bpf_text = """
 
 #include <uapi/linux/ptrace.h>
 #include <linux/sched.h>
@@ -64,8 +66,7 @@ u64 pid_tgid = bpf_get_current_pid_tgid();
 u32 pid = pid_tgid >> 32;
 u32 tid = (u32) pid_tgid;
 
-//PID_FILTER
-//SIGNAL_FILTER
+PID_FILTER
 
 struct val_t val = {.pid = pid};
 
@@ -103,14 +104,21 @@ events.perf_submit(ctx, &data, sizeof(data));
 return 0;
 
         }
-""")
+"""
 
-#if args.pid:
- #   bpf_text = bpf_text.replace('PID_FILTER',
-  #      'if (pid != %s) { return 0; }' % args.pid)
-#else:
- #   bpf_text = bpf_text.replace('PID_FILTER', '')
+if args.pid:
+    bpf_text = bpf_text.replace('PID_FILTER',
+        'if (pid != %s) { return 0; }' % args.pid)
+else:
+    bpf_text = bpf_text.replace('PID_FILTER', '')
+if debug or args.ebpf:
+    print(bpf_text)
+    if args.ebpf:
+        exit()
 
+
+# initialize BPF
+b = BPF(text=bpf_text)
 
 print("%-9s %-6s %-16s %-16s %-9s %-9s %3s" % (
     "TIME", "PID", "COMM", "START", "LENGTH", "BEHAVIOUR", "RESULT"))
@@ -132,10 +140,5 @@ while 1:
         b.perf_buffer_poll()
     except KeyboardInterrupt:
         exit()
-
-
-
-
-
 
 

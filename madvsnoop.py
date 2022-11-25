@@ -1,13 +1,11 @@
 #
 # REQUIRES: Linux 4.7+ (BPF_PROG_TYPE_TRACEPOINT support).
 #
-# Test by running this, then in another shell, run:
-#     dd if=/dev/urandom of=/dev/null bs=1k count=5
 #
 # Copyright 2022
 # Licensed under the Apache License, Version 2.0 (the "License")
 
-#!/usr/bin/python
+# !/usr/bin/python
 
 from __future__ import print_function
 from bcc import BPF
@@ -15,8 +13,9 @@ from bcc.utils import printb
 import argparse
 import signal
 from time import strftime
+import os, subprocess
 
-#arguments
+# arguments
 examples = """examples:
     ./madvsnoop           # trace all madvise() signals
     ./madvsnoop -p 4086    # only trace PID 4086
@@ -29,13 +28,10 @@ parser.add_argument("-x", "--failed", action="store_true",
     help="only show failed madvise syscalls")
 parser.add_argument("-p", "--pid",
     help="trace this PID only")
-#parser.add_argument("-s", "--signal",
- #   help="trace this signal only")
 parser.add_argument("--ebpf", action="store_true",
     help=argparse.SUPPRESS)
 args = parser.parse_args()
 debug = 0
-
 
 # define BPF program
 bpf_text = """
@@ -105,6 +101,8 @@ return 0;
 
         }
 """
+if os.geteuid() != 0:
+    exit("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
 
 if args.pid:
     bpf_text = bpf_text.replace('PID_FILTER',
@@ -130,8 +128,10 @@ def print_event(cpu, data, size):
     if (args.failed and (event.ret >= 0)):
         return
 
-    printb(b"%-9s %-6d %-16s %-16d %-9d %-9d %3d" % (strftime("%H:%M:%S").encode('ascii'),
-        event.pid, event.comm, event.start, event.length, event.behaviour, event.ret))
+    printb(b"%-9s %-6d %-16s %-16d %-9d %-9d %3d" %
+           (strftime("%H:%M:%S").encode('ascii'),
+            event.pid, event.comm, event.start,
+            event.length, event.behaviour, event.ret))
 
 # loop with callback to print_event
 b["events"].open_perf_buffer(print_event)
@@ -140,5 +140,3 @@ while 1:
         b.perf_buffer_poll()
     except KeyboardInterrupt:
         exit()
-
-

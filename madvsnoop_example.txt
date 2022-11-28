@@ -15,7 +15,7 @@ The first line showed a memory usage of 8368128 by PID 4152. The result, 0, mean
 
 USAGE message:
 
-# ./madvsnoop -h
+# python madvsnoop.py -h
 usage: madvsnoop [-h] [-x] [-p PID]
 
 Trace signals issued by the kill() syscall

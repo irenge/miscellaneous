@@ -1,11 +1,16 @@
+# !/usr/bin/python
 #
+# madvsnoop   Trace mdavise syscall displaying values from every programs.
+#             For Linux, uses BCC, eBPF. Embedded C.
+#
+# USAGE: madvsnoop [-h] [-p PID]
 # REQUIRES: Linux 4.7+ (BPF_PROG_TYPE_TRACEPOINT support).
 #
 #
-# Copyright 2022
+# Copyright 2022 ELISA, Linux Foundation Mentorship program
 # Licensed under the Apache License, Version 2.0 (the "License")
 
-# !/usr/bin/python
+# 15-Nov-2022   Jules Irenge   Created this.
 
 from __future__ import print_function
 from bcc import BPF
